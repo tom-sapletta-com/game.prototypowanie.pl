@@ -1,0 +1,1675 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ProtoLab - Nauka Prototypowania</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            touch-action: manipulation;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+        
+        #gameContainer {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 1200px;
+            width: 100%;
+            padding: 20px;
+        }
+        
+        #header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #4a5568;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        #levelInfo {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .info-item {
+            background: #f7fafc;
+            padding: 8px 15px;
+            border-radius: 10px;
+            margin: 5px;
+        }
+        
+        .info-label {
+            font-size: 12px;
+            color: #718096;
+        }
+        
+        .info-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2d3748;
+        }
+        
+        #challenge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        #challenge h2 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        
+        #challenge p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        #stageIndicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 15px;
+            gap: 10px;
+        }
+        
+        .stage {
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .stage.active {
+            background: #48bb78;
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        .stage.completed {
+            background: #4299e1;
+            color: white;
+        }
+        
+        .stage.inactive {
+            background: #e2e8f0;
+            color: #a0aec0;
+        }
+        
+        #canvasArea {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .canvas-section {
+            text-align: center;
+        }
+        
+        .canvas-label {
+            font-size: 14px;
+            color: #4a5568;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        
+        .canvas-wrapper {
+            position: relative;
+            border: 3px solid #4a5568;
+            border-radius: 10px;
+            overflow: hidden;
+            background: white;
+            display: inline-block;
+        }
+        
+        #referenceCanvas, #drawingCanvas {
+            display: block;
+        }
+        
+        #drawingCanvas {
+            cursor: crosshair;
+            touch-action: none;
+        }
+        
+        #referenceCanvas {
+            opacity: 0.8;
+        }
+        
+        .reference-wrapper {
+            border-color: #cbd5e0;
+        }
+        
+        #validationOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+        
+        .canvas-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            min-height: 35px;
+        }
+        
+        #accuracy {
+            background: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .accuracy-high {
+            color: #48bb78;
+        }
+        
+        .accuracy-medium {
+            color: #f6ad55;
+        }
+        
+        .accuracy-low {
+            color: #f56565;
+        }
+        
+        #hint {
+            background: #fef5e7;
+            border: 2px solid #f39c12;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        #hint.show {
+            display: block;
+        }
+        
+        #controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .btn-secondary {
+            background: #718096;
+        }
+        
+        .btn-success {
+            background: #48bb78;
+        }
+        
+        .btn-warning {
+            background: #f6ad55;
+        }
+        
+        #feedback {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            z-index: 1000;
+            display: none;
+            text-align: center;
+            max-width: 400px;
+        }
+        
+        #feedback.show {
+            display: block;
+            animation: popup 0.5s ease;
+        }
+        
+        @keyframes popup {
+            from { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+            to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+        
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            display: none;
+        }
+        
+        #overlay.show {
+            display: block;
+        }
+        
+        #toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            transform: translateX(-50%) translateY(100px);
+            max-width: 90%;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        #toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        #toast.success {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        }
+        
+        #toast.warning {
+            background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
+        }
+        
+        #toast.error {
+            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+        }
+        
+        .tool-buttons {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+        
+        .tool-btn {
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+        
+        .tool-btn.active {
+            background: #4299e1;
+            color: white;
+        }
+        
+        #timer {
+            background: #4a5568;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 14px;
+            display: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        #timer.show {
+            display: inline-block;
+        }
+        
+        .timer-warning {
+            background: #f56565 !important;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        #startScreen {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        #startScreen h2 {
+            color: #4a5568;
+            margin-bottom: 20px;
+        }
+        
+        #startScreen p {
+            color: #718096;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        #gameScreen {
+            display: none;
+        }
+        
+        .legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .legend-box {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+        
+        @media (max-width: 800px) {
+            #canvasArea {
+                flex-direction: column;
+            }
+            
+            h1 { font-size: 22px; }
+            .info-item { padding: 5px 10px; }
+            .info-value { font-size: 16px; }
+            button { padding: 10px 20px; font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="startScreen">
+            <h2>🔬 Witaj w ProtoLab!</h2>
+            <p>
+                <strong>Naucz się myśleć jak inżynier!</strong><br><br>
+                W tej grze będziesz rozwiązywać problemy projektowe poprzez 3 etapy:<br>
+                <strong>1. ANALIZA</strong> - Zrozum problem i kluczowe elementy<br>
+                <strong>2. SZKIC</strong> - Zaplanuj rozwiązanie<br>
+                <strong>3. PROTOTYP</strong> - Stwórz kompletne rozwiązanie<br><br>
+                Po lewej zobaczysz wzór referencyjny, po prawej rysujesz swoje rozwiązanie.<br>
+                System oceni zgodność strukturalną - nie musisz rysować idealnie!<br>
+                Zielone pola = dobrze, czerwone = brakuje elementu<br><br>
+                <strong>⏰ Od poziomu 4 włącza się timer!</strong><br>
+                Klikaj "Sprawdź" aby zobaczyć postępy, "Dalej" gdy skończysz etap.
+            </p>
+            <button class="btn-primary" onclick="startGame()">Rozpocznij Naukę</button>
+        </div>
+        
+        <div id="gameScreen">
+            <div id="header">
+                <h1>🔬 ProtoLab - Laboratorium Prototypowania</h1>
+            </div>
+            
+            <div id="levelInfo">
+                <div class="info-item">
+                    <div class="info-label">Poziom</div>
+                    <div class="info-value" id="level">1</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Punkty</div>
+                    <div class="info-value" id="score">0</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Siatka</div>
+                    <div class="info-value" id="gridSize">4x4</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Dokładność</div>
+                    <div class="info-value" id="accuracyDisplay">0%</div>
+                </div>
+            </div>
+            
+            <div id="challenge">
+                <h2 id="challengeTitle">Wyzwanie #1: Most</h2>
+                <p id="challengeDesc">Zaprojektuj strukturę, która połączy dwa brzegi</p>
+            </div>
+            
+            <div id="stageIndicator">
+                <div class="stage active" id="stage1">1. ANALIZA</div>
+                <div class="stage inactive" id="stage2">2. SZKIC</div>
+                <div class="stage inactive" id="stage3">3. PROTOTYP</div>
+            </div>
+            
+            <div id="hint" class="show">
+                <strong>💡 Wskazówka:</strong> <span id="hintText">Zobacz wzór po lewej. Zaznacz główne elementy konstrukcyjne.</span>
+            </div>
+            
+            <div id="canvasArea">
+                <div class="canvas-section">
+                    <div class="canvas-label">📐 WZÓR REFERENCYJNY</div>
+                    <div class="canvas-info"></div>
+                    <div class="canvas-wrapper reference-wrapper">
+                        <canvas id="referenceCanvas"></canvas>
+                    </div>
+                </div>
+                
+                <div class="canvas-section">
+                    <div class="canvas-label">✏️ TWÓJ PROJEKT</div>
+                    <div class="canvas-info">
+                        <div id="timer">⏱️ <span id="timeLeft">60</span>s</div>
+                        <div id="accuracy" class="accuracy-low">0%</div>
+                    </div>
+                    <div class="canvas-wrapper">
+                        <canvas id="drawingCanvas"></canvas>
+                        <canvas id="validationOverlay"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-box" style="background: rgba(72, 187, 120, 0.3);"></div>
+                    <span>Poprawne</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box" style="background: rgba(245, 101, 101, 0.3);"></div>
+                    <span>Brakujące</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box" style="background: rgba(246, 173, 85, 0.3);"></div>
+                    <span>Częściowe</span>
+                </div>
+            </div>
+            
+            <div class="tool-buttons">
+                <button class="tool-btn active" onclick="setTool('pen')">✏️ Rysuj</button>
+                <button class="tool-btn" onclick="setTool('eraser')">🧹 Wymaż</button>
+                <button class="tool-btn" onclick="setTool('line')">📏 Linia</button>
+                <button class="tool-btn" onclick="toggleReference()">👁️ Pokaż/Ukryj wzór</button>
+            </div>
+            
+            <div id="controls">
+                <button class="btn-secondary" onclick="clearAll()">Wyczyść</button>
+                <button class="btn-warning" onclick="checkDrawing()">🔍 Sprawdź</button>
+                <button class="btn-success" onclick="nextStage()">Dalej →</button>
+                <button class="btn-primary" onclick="showHint()">💡 Podpowiedź</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="overlay"></div>
+    <div id="feedback">
+        <h2 id="feedbackTitle">Świetnie!</h2>
+        <p id="feedbackText">Przeszedłeś do kolejnego etapu</p>
+        <div id="feedbackScore"></div>
+    </div>
+    
+    <div id="levelTransition">
+        <div class="transition-content">
+            <h2>🎉 Poziom <span id="transitionLevel">2</span> 🎉</h2>
+            <p id="transitionText">Przygotuj się na nowe wyzwanie!</p>
+        </div>
+    </div>
+    
+    <div id="toast"></div>
+    
+    <script>
+        // Enhanced game state with validation
+        let gameState = {
+            level: 1,
+            score: 0,
+            currentStage: 1,
+            gridDivisions: 4,
+            isDrawing: false,
+            currentTool: 'pen',
+            timer: null,
+            timeLeft: 60,
+            strokes: [],
+            currentStroke: [],
+            showReference: true,
+            currentAccuracy: 0,
+            stageAccuracies: [0, 0, 0],
+            toastTimeout: null,
+            isTransitioning: false, // Prevent multiple transitions
+            challenges: [
+                {
+                    title: "Most",
+                    description: "Zaprojektuj strukturę, która połączy dwa brzegi",
+                    patterns: [
+                        // Stage 1 - Analysis (basic structure)
+                        [
+                            [0,0,0,0],
+                            [1,0,0,1],
+                            [1,1,1,1],
+                            [0,0,0,0]
+                        ],
+                        // Stage 2 - Sketch (more detail)
+                        [
+                            [0,1,1,0],
+                            [1,1,1,1],
+                            [1,1,1,1],
+                            [1,0,0,1]
+                        ],
+                        // Stage 3 - Prototype (complete)
+                        [
+                            [1,1,1,1],
+                            [1,1,1,1],
+                            [1,1,1,1],
+                            [1,1,1,1]
+                        ]
+                    ],
+                    hints: [
+                        "Zaznacz filary po bokach i pomost łączący",
+                        "Dodaj elementy wzmacniające i podpory",
+                        "Uzupełnij wszystkie elementy konstrukcyjne i połączenia"
+                    ],
+                    criticalZones: [
+                        [[1,2],[1,3],[2,2],[2,3]], // Pillars
+                        [[2,0],[2,1],[2,2],[2,3]]  // Bridge deck
+                    ]
+                },
+                {
+                    title: "Dźwignia",
+                    description: "System podnoszący ciężar",
+                    patterns: [
+                        // Stage 1
+                        [
+                            [0,0,0,0],
+                            [1,1,1,1],
+                            [0,1,0,0],
+                            [0,0,0,0]
+                        ],
+                        // Stage 2
+                        [
+                            [1,0,0,1],
+                            [1,1,1,1],
+                            [0,1,0,0],
+                            [1,1,1,1]
+                        ],
+                        // Stage 3
+                        [
+                            [1,0,0,1],
+                            [1,1,1,1],
+                            [1,1,1,0],
+                            [1,1,1,1]
+                        ]
+                    ],
+                    hints: [
+                        "Narysuj belkę i punkt podparcia",
+                        "Dodaj ramiona dźwigni i obciążenia",
+                        "Pokaż siły działające na system"
+                    ],
+                    criticalZones: [
+                        [[1,0],[1,1],[1,2],[1,3]], // Lever arm
+                        [[2,1]]                      // Fulcrum
+                    ]
+                },
+                {
+                    title: "Przekładnia",
+                    description: "System przekazywania ruchu obrotowego",
+                    patterns: [
+                        // Stage 1
+                        [
+                            [0,1,1,0],
+                            [1,1,1,1],
+                            [1,1,1,1],
+                            [0,1,1,0]
+                        ],
+                        // Stage 2
+                        [
+                            [1,1,1,0],
+                            [1,1,1,1],
+                            [1,1,1,1],
+                            [0,1,1,1]
+                        ],
+                        // Stage 3
+                        [
+                            [1,1,1,1],
+                            [1,1,1,1],
+                            [1,1,1,1],
+                            [1,1,1,1]
+                        ]
+                    ],
+                    hints: [
+                        "Narysuj dwa koła zębate",
+                        "Dodaj zęby i połączenie między kołami",
+                        "Zaznacz osie obrotu i kierunki"
+                    ],
+                    criticalZones: [
+                        [[0,1],[0,2],[1,1],[1,2]], // First gear
+                        [[2,1],[2,2],[3,1],[3,2]]  // Second gear
+                    ]
+                },
+                {
+                    title: "Zbiornik",
+                    description: "Pojemnik z systemem kontroli przepływu",
+                    patterns: [
+                        // Stage 1
+                        [
+                            [1,1,1,1],
+                            [1,0,0,1],
+                            [1,0,0,1],
+                            [1,1,1,1]
+                        ],
+                        // Stage 2
+                        [
+                            [1,1,1,1],
+                            [1,0,0,1],
+                            [1,0,0,1],
+                            [1,1,1,1]
+                        ],
+                        // Stage 3
+                        [
+                            [1,1,1,1],
+                            [1,1,1,1],
+                            [1,1,1,1],
+                            [1,1,1,1]
+                        ]
+                    ],
+                    hints: [
+                        "Narysuj ściany zbiornika",
+                        "Dodaj zawór odpływowy na dole",
+                        "Zaznacz poziom maksymalny i system przelewowy"
+                    ],
+                    criticalZones: [
+                        [[0,0],[0,3],[3,0],[3,3]], // Walls
+                        [[3,1],[3,2]]               // Outlet
+                    ]
+                },
+                {
+                    title: "Ramię Robota",
+                    description: "Mechanizm chwytający z przegubami",
+                    patterns: [
+                        // Stage 1
+                        [
+                            [1,0,0,0],
+                            [1,1,0,0],
+                            [0,1,1,0],
+                            [0,0,1,1]
+                        ],
+                        // Stage 2
+                        [
+                            [1,1,0,0],
+                            [1,1,1,0],
+                            [0,1,1,1],
+                            [0,0,1,1]
+                        ],
+                        // Stage 3
+                        [
+                            [1,1,0,0],
+                            [1,1,1,1],
+                            [1,1,1,1],
+                            [0,0,1,1]
+                        ]
+                    ],
+                    hints: [
+                        "Narysuj podstawę i pierwsze ramię",
+                        "Dodaj przeguby i drugie ramię",
+                        "Zakończ chwytakiem na końcu"
+                    ],
+                    criticalZones: [
+                        [[0,0],[1,0]],              // Base
+                        [[1,1],[2,2]],              // Arms
+                        [[3,2],[3,3]]               // Gripper
+                    ]
+                }
+            ]
+        };
+        
+        let canvas, ctx, refCanvas, refCtx, valCanvas, valCtx;
+        let canvasRect;
+        
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'block';
+            initCanvases();
+            loadChallenge();
+        }
+        
+        function initCanvases() {
+            console.log('[INIT CANVAS] Initializing canvases');
+            
+            // Main drawing canvas
+            canvas = document.getElementById('drawingCanvas');
+            ctx = canvas.getContext('2d');
+            
+            // Reference canvas
+            refCanvas = document.getElementById('referenceCanvas');
+            refCtx = refCanvas.getContext('2d');
+            
+            // Validation overlay
+            valCanvas = document.getElementById('validationOverlay');
+            valCtx = valCanvas.getContext('2d');
+            
+            // Set canvas sizes
+            const size = Math.min(window.innerWidth < 800 ? 250 : 350, 350);
+            [canvas, refCanvas, valCanvas].forEach(c => {
+                c.width = size;
+                c.height = size;
+            });
+            
+            console.log(`[INIT CANVAS] Canvas size: ${size}x${size}, Grid: ${gameState.gridDivisions}x${gameState.gridDivisions}`);
+            
+            // Position validation overlay
+            valCanvas.style.position = 'absolute';
+            valCanvas.style.top = '0';
+            valCanvas.style.left = '0';
+            
+            canvasRect = canvas.getBoundingClientRect();
+            
+            // Draw grids
+            drawGrid(ctx);
+            drawGrid(refCtx);
+            
+            // Draw reference pattern
+            drawReferencePattern();
+            
+            // Remove old event listeners first
+            const newCanvas = canvas.cloneNode(true);
+            canvas.parentNode.replaceChild(newCanvas, canvas);
+            canvas = newCanvas;
+            ctx = canvas.getContext('2d');
+            
+            // Add event listeners
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+            
+            // Touch events
+            canvas.addEventListener('touchstart', handleTouch);
+            canvas.addEventListener('touchmove', handleTouch);
+            canvas.addEventListener('touchend', stopDrawing);
+            
+            console.log('[INIT CANVAS] Canvas initialized successfully');
+        }
+        
+        function drawGrid(context) {
+            context.strokeStyle = '#e2e8f0';
+            context.lineWidth = 1;
+            
+            const gridSize = context.canvas.width / gameState.gridDivisions;
+            
+            for (let i = 0; i <= gameState.gridDivisions; i++) {
+                const pos = i * gridSize;
+                
+                // Vertical lines
+                context.beginPath();
+                context.moveTo(pos, 0);
+                context.lineTo(pos, context.canvas.height);
+                context.stroke();
+                
+                // Horizontal lines
+                context.beginPath();
+                context.moveTo(0, pos);
+                context.lineTo(context.canvas.width, pos);
+                context.stroke();
+            }
+        }
+        
+        function drawReferencePattern() {
+            refCtx.clearRect(0, 0, refCanvas.width, refCanvas.height);
+            drawGrid(refCtx);
+            
+            const challenge = gameState.challenges[(gameState.level - 1) % gameState.challenges.length];
+            const pattern = challenge.patterns[gameState.currentStage - 1];
+            const patternSize = pattern.length;
+            const cellSize = refCanvas.width / gameState.gridDivisions;
+            
+            // Scale pattern to fill the entire canvas
+            const scaleFactor = gameState.gridDivisions / patternSize;
+            
+            refCtx.fillStyle = getStageColor() + '40'; // Semi-transparent
+            refCtx.strokeStyle = getStageColor();
+            refCtx.lineWidth = 2;
+            
+            for (let row = 0; row < patternSize; row++) {
+                for (let col = 0; col < patternSize; col++) {
+                    if (pattern[row][col] === 1) {
+                        // Scale the pattern to fill the entire canvas
+                        const startX = col * cellSize * scaleFactor;
+                        const startY = row * cellSize * scaleFactor;
+                        const endX = (col + 1) * cellSize * scaleFactor;
+                        const endY = (row + 1) * cellSize * scaleFactor;
+                        
+                        // Fill scaled area
+                        refCtx.fillRect(startX, startY, endX - startX, endY - startY);
+                        
+                        // Draw border
+                        refCtx.strokeRect(startX, startY, endX - startX, endY - startY);
+                    }
+                }
+            }
+            
+            // Draw critical zones with stronger emphasis
+            if (challenge.criticalZones[gameState.currentStage - 1]) {
+                refCtx.fillStyle = '#f56565' + '60';
+                challenge.criticalZones[gameState.currentStage - 1].forEach(([row, col]) => {
+                    const startX = col * cellSize * scaleFactor;
+                    const startY = row * cellSize * scaleFactor;
+                    const endX = (col + 1) * cellSize * scaleFactor;
+                    const endY = (row + 1) * cellSize * scaleFactor;
+                    refCtx.fillRect(startX, startY, endX - startX, endY - startY);
+                });
+            }
+        }
+        
+        function validateDrawing(showPopup = false) {
+            console.log(`[VALIDATE] Starting validation, showPopup: ${showPopup}`);
+            
+            const challenge = gameState.challenges[(gameState.level - 1) % gameState.challenges.length];
+            const pattern = challenge.patterns[gameState.currentStage - 1];
+            const patternSize = pattern.length;
+            const cellSize = canvas.width / gameState.gridDivisions;
+            const scaleFactor = gameState.gridDivisions / patternSize;
+            
+            console.log(`[VALIDATE] Pattern size: ${patternSize}, Grid: ${gameState.gridDivisions}, Scale: ${scaleFactor}`);
+            
+            // Get user's drawing data
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const userGrid = [];
+            
+            // Convert canvas to grid representation
+            for (let row = 0; row < gameState.gridDivisions; row++) {
+                userGrid[row] = [];
+                for (let col = 0; col < gameState.gridDivisions; col++) {
+                    const cellOccupancy = getCellOccupancy(imageData, col, row, cellSize);
+                    userGrid[row][col] = cellOccupancy > 0.1 ? 1 : 0; // 10% threshold
+                }
+            }
+            
+            // Calculate accuracy based on scaled pattern
+            let correctCells = 0;
+            let totalExpected = 0;
+            let criticalCorrect = 0;
+            let criticalTotal = 0;
+            
+            // Clear validation overlay
+            valCtx.clearRect(0, 0, valCanvas.width, valCanvas.height);
+            
+            // Check each cell in the pattern (scaled to grid)
+            for (let row = 0; row < patternSize; row++) {
+                for (let col = 0; col < patternSize; col++) {
+                    const expected = pattern[row][col];
+                    
+                    // Map pattern to scaled grid positions
+                    const gridStartRow = Math.floor(row * scaleFactor);
+                    const gridEndRow = Math.ceil((row + 1) * scaleFactor);
+                    const gridStartCol = Math.floor(col * scaleFactor);
+                    const gridEndCol = Math.ceil((col + 1) * scaleFactor);
+                    
+                    // Check if this is a critical zone
+                    const isCritical = challenge.criticalZones[gameState.currentStage - 1]?.some(
+                        ([r, c]) => r === row && c === col
+                    );
+                    
+                    // Check if the scaled area is filled
+                    let areaFilled = false;
+                    for (let gr = gridStartRow; gr < gridEndRow && gr < gameState.gridDivisions; gr++) {
+                        for (let gc = gridStartCol; gc < gridEndCol && gc < gameState.gridDivisions; gc++) {
+                            if (userGrid[gr][gc] === 1) {
+                                areaFilled = true;
+                                break;
+                            }
+                        }
+                        if (areaFilled) break;
+                    }
+                    
+                    // Draw validation overlay
+                    const x = gridStartCol * cellSize;
+                    const y = gridStartRow * cellSize;
+                    const width = (gridEndCol - gridStartCol) * cellSize;
+                    const height = (gridEndRow - gridStartRow) * cellSize;
+                    
+                    if (expected === 1) {
+                        totalExpected++;
+                        if (isCritical) criticalTotal++;
+                        
+                        if (areaFilled) {
+                            correctCells++;
+                            if (isCritical) criticalCorrect++;
+                            // Green for correct
+                            valCtx.fillStyle = 'rgba(72, 187, 120, 0.3)';
+                        } else {
+                            // Red for missing
+                            valCtx.fillStyle = 'rgba(245, 101, 101, 0.3)';
+                        }
+                        valCtx.fillRect(x, y, width, height);
+                    } else if (areaFilled && expected === 0) {
+                        // Orange for extra (not necessarily wrong)
+                        valCtx.fillStyle = 'rgba(246, 173, 85, 0.3)';
+                        valCtx.fillRect(x, y, width, height);
+                    }
+                }
+            }
+            
+            // Calculate weighted accuracy (critical zones worth more)
+            const baseAccuracy = totalExpected > 0 ? (correctCells / totalExpected) * 100 : 0;
+            const criticalBonus = criticalTotal > 0 ? (criticalCorrect / criticalTotal) * 20 : 0;
+            const accuracy = Math.min(100, baseAccuracy + criticalBonus);
+            
+            console.log(`[VALIDATE] Correct: ${correctCells}/${totalExpected}, Critical: ${criticalCorrect}/${criticalTotal}, Final accuracy: ${accuracy}%`);
+            
+            gameState.currentAccuracy = Math.round(accuracy);
+            gameState.stageAccuracies[gameState.currentStage - 1] = gameState.currentAccuracy;
+            
+            // Update UI
+            updateAccuracyDisplay(gameState.currentAccuracy);
+            
+            // Show feedback using toast notifications
+            if (showPopup) {
+                if (accuracy >= 80) {
+                    showToast(`Doskonale! 🎯 Dokładność: ${Math.round(accuracy)}%`, 'success');
+                } else if (accuracy >= 60) {
+                    showToast(`Dobrze! 👍 Dokładność: ${Math.round(accuracy)}%`, 'warning');
+                } else {
+                    showToast(`Spróbuj ponownie 🔄 Dokładność: ${Math.round(accuracy)}%`, 'error');
+                }
+            }
+            
+            return accuracy;
+        }
+        
+        function checkDrawing() {
+            validateDrawing(true); // Show popup when manually checking
+        }
+        
+        function getCellOccupancy(imageData, col, row, cellSize) {
+            let filledPixels = 0;
+            let totalPixels = 0;
+            
+            const startX = Math.floor(col * cellSize);
+            const startY = Math.floor(row * cellSize);
+            const endX = Math.floor((col + 1) * cellSize);
+            const endY = Math.floor((row + 1) * cellSize);
+            
+            for (let y = startY; y < endY; y++) {
+                for (let x = startX; x < endX; x++) {
+                    const index = (y * imageData.width + x) * 4;
+                    const alpha = imageData.data[index + 3];
+                    const r = imageData.data[index];
+                    const g = imageData.data[index + 1];
+                    const b = imageData.data[index + 2];
+                    
+                    // Check if pixel is not white or transparent
+                    if (alpha > 0 && (r < 240 || g < 240 || b < 240)) {
+                        filledPixels++;
+                    }
+                    totalPixels++;
+                }
+            }
+            
+            return filledPixels / totalPixels;
+        }
+        
+        function updateAccuracyDisplay(accuracy) {
+            const display = document.getElementById('accuracy');
+            const mainDisplay = document.getElementById('accuracyDisplay');
+            
+            display.textContent = accuracy + '%';
+            mainDisplay.textContent = accuracy + '%';
+            
+            // Update color based on accuracy
+            display.className = accuracy >= 80 ? 'accuracy-high' : 
+                               accuracy >= 60 ? 'accuracy-medium' : 
+                               'accuracy-low';
+            
+            console.log(`[ACCURACY] Updated to ${accuracy}%`);
+        }
+        
+        function startDrawing(e) {
+            gameState.isDrawing = true;
+            gameState.currentStroke = [];
+            
+            const pos = getMousePos(e);
+            const lineWidth = (canvas.width / gameState.gridDivisions) * 0.5; // 50% of grid cell
+            
+            logIOEvent('DRAW_START', `Position: [${pos.x.toFixed(0)}, ${pos.y.toFixed(0)}], Tool: ${gameState.currentTool}, LineWidth: ${lineWidth.toFixed(1)}`);
+            
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+            
+            if (gameState.currentTool === 'pen') {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.strokeStyle = getStageColor();
+                ctx.lineWidth = lineWidth;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+            } else if (gameState.currentTool === 'eraser') {
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.lineWidth = lineWidth * 1.5; // Eraser bit larger
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+            }
+            
+            gameState.currentStroke.push(pos);
+        }
+        
+        function draw(e) {
+            if (!gameState.isDrawing) return;
+            
+            const pos = getMousePos(e);
+            const lineWidth = (canvas.width / gameState.gridDivisions) * 0.5; // 50% of grid cell
+            
+            if (gameState.currentTool === 'line' && gameState.currentStroke.length > 0) {
+                // Clear and redraw for line tool
+                clearCanvas();
+                redrawStrokes();
+                
+                ctx.beginPath();
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.moveTo(gameState.currentStroke[0].x, gameState.currentStroke[0].y);
+                ctx.lineTo(pos.x, pos.y);
+                ctx.strokeStyle = getStageColor();
+                ctx.lineWidth = lineWidth;
+                ctx.lineCap = 'round';
+                ctx.stroke();
+                
+                // Log only periodically to avoid spam
+                if (Date.now() % 5 === 0) {
+                    logIOEvent('DRAW_LINE', `From: [${gameState.currentStroke[0].x.toFixed(0)}, ${gameState.currentStroke[0].y.toFixed(0)}] To: [${pos.x.toFixed(0)}, ${pos.y.toFixed(0)}]`);
+                }
+            } else {
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+                gameState.currentStroke.push(pos);
+                
+                // Log drawing movement periodically
+                if (gameState.currentStroke.length % 10 === 0) {
+                    logIOEvent('DRAW_MOVE', `Points: ${gameState.currentStroke.length}, Last: [${pos.x.toFixed(0)}, ${pos.y.toFixed(0)}]`);
+                }
+            }
+        }
+        
+        function stopDrawing() {
+            if (gameState.isDrawing && gameState.currentStroke.length > 0) {
+                gameState.strokes.push({
+                    points: [...gameState.currentStroke],
+                    tool: gameState.currentTool,
+                    color: getStageColor()
+                });
+                
+                logIOEvent('DRAW_END', `Stroke completed with ${gameState.currentStroke.length} points, Total strokes: ${gameState.strokes.length}`);
+            }
+            gameState.isDrawing = false;
+        }
+        
+        function handleTouch(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 
+                                            e.type === 'touchmove' ? 'mousemove' : 'mouseup', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        }
+        
+        function getMousePos(e) {
+            canvasRect = canvas.getBoundingClientRect();
+            return {
+                x: (e.clientX - canvasRect.left) * (canvas.width / canvasRect.width),
+                y: (e.clientY - canvasRect.top) * (canvas.height / canvasRect.height)
+            };
+        }
+        
+        function getStageColor() {
+            switch(gameState.currentStage) {
+                case 1: return '#4299e1'; // Blue for analysis
+                case 2: return '#48bb78'; // Green for sketch
+                case 3: return '#f56565'; // Red for prototype
+                default: return '#4a5568';
+            }
+        }
+        
+        function setTool(tool) {
+            gameState.currentTool = tool;
+            document.querySelectorAll('.tool-btn').forEach(btn => {
+                if (btn.textContent.includes(tool === 'pen' ? 'Rysuj' : 
+                                            tool === 'eraser' ? 'Wymaż' : 
+                                            tool === 'line' ? 'Linia' : '')) {
+                    btn.classList.add('active');
+                } else if (!btn.textContent.includes('👁️')) {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+        
+        function clearCanvas() {
+            console.log('[CLEAR CANVAS] Clearing drawing only');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawGrid(ctx);
+            gameState.strokes = [];
+            // Don't clear validation automatically - user can check again
+        }
+        
+        function clearAll() {
+            clearCanvas();
+            valCtx.clearRect(0, 0, valCanvas.width, valCanvas.height);
+            gameState.currentAccuracy = 0;
+            updateAccuracyDisplay(0);
+        }
+        
+        function redrawStrokes() {
+            const lineWidth = (canvas.width / gameState.gridDivisions) * 0.5; // 50% of grid cell
+            
+            gameState.strokes.forEach(stroke => {
+                ctx.beginPath();
+                ctx.strokeStyle = stroke.color;
+                ctx.lineWidth = stroke.tool === 'eraser' ? lineWidth * 1.5 : lineWidth;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.globalCompositeOperation = stroke.tool === 'eraser' ? 'destination-out' : 'source-over';
+                
+                if (stroke.points.length > 0) {
+                    ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+                    stroke.points.forEach(point => {
+                        ctx.lineTo(point.x, point.y);
+                    });
+                    ctx.stroke();
+                }
+            });
+        }
+        
+        function toggleReference() {
+            gameState.showReference = !gameState.showReference;
+            refCanvas.style.display = gameState.showReference ? 'block' : 'none';
+        }
+        
+        function nextStage() {
+            // Prevent action during transition
+            if (gameState.isTransitioning) {
+                console.log('[NEXT STAGE] Transition in progress, ignoring');
+                return;
+            }
+            
+            console.log(`[NEXT STAGE] Current stage: ${gameState.currentStage}, Level: ${gameState.level}`);
+            const accuracy = validateDrawing(false); // Don't show popup, just validate
+            console.log(`[NEXT STAGE] Accuracy: ${accuracy}%`);
+            
+            // Store accuracy for this stage
+            gameState.stageAccuracies[gameState.currentStage - 1] = Math.round(accuracy);
+            
+            if (accuracy < 60 && gameState.level > 1) {
+                console.log('[NEXT STAGE] Accuracy too low, showing warning');
+                showToast(`⚠️ Potrzebujesz minimum 60% dokładności. Obecna: ${Math.round(accuracy)}%`, 'error', 4000);
+                return;
+            }
+            
+            if (gameState.currentStage < 3) {
+                const scoreBonus = Math.round((10 * gameState.level) * (accuracy / 100));
+                gameState.score += scoreBonus;
+                gameState.currentStage++;
+                
+                console.log(`[NEXT STAGE] Moving to stage ${gameState.currentStage}, Score bonus: ${scoreBonus}`);
+                
+                // DON'T clear canvas - user continues drawing
+                // Just update the reference pattern and UI
+                updateStageDisplay();
+                drawReferencePattern();
+                
+                // Clear validation overlay for new stage
+                valCtx.clearRect(0, 0, valCanvas.width, valCanvas.height);
+                
+                showToast(`✅ Etap ${gameState.currentStage} rozpoczęty! Dokładność: ${Math.round(accuracy)}% (+${scoreBonus} pkt)`, 'success');
+                
+                // Update score display
+                document.getElementById('score').textContent = gameState.score;
+            } else {
+                console.log('[NEXT STAGE] All stages complete, completing level');
+                completeLevel();
+            }
+        }
+        
+        function updateStageDisplay() {
+            console.log(`[UPDATE STAGE] Updating display for stage ${gameState.currentStage}`);
+            
+            document.querySelectorAll('.stage').forEach((stage, index) => {
+                stage.classList.remove('active', 'completed', 'inactive');
+                if (index + 1 < gameState.currentStage) {
+                    stage.classList.add('completed');
+                    console.log(`[UPDATE STAGE] Stage ${index + 1} marked as completed`);
+                } else if (index + 1 === gameState.currentStage) {
+                    stage.classList.add('active');
+                    console.log(`[UPDATE STAGE] Stage ${index + 1} marked as active`);
+                } else {
+                    stage.classList.add('inactive');
+                    console.log(`[UPDATE STAGE] Stage ${index + 1} marked as inactive`);
+                }
+            });
+            
+            // Update hint
+            const challenge = gameState.challenges[(gameState.level - 1) % gameState.challenges.length];
+            const hint = challenge.hints[gameState.currentStage - 1];
+            document.getElementById('hintText').textContent = hint;
+            console.log(`[UPDATE STAGE] Hint updated: "${hint}"`);
+            
+            // Force UI update
+            document.getElementById('stage1').textContent = '1. ANALIZA';
+            document.getElementById('stage2').textContent = '2. SZKIC';
+            document.getElementById('stage3').textContent = '3. PROTOTYP';
+        }
+        
+        function completeLevel() {
+            // Calculate total score for level
+            const avgAccuracy = gameState.stageAccuracies.reduce((a, b) => a + b, 0) / 3;
+            const levelBonus = Math.round(50 * gameState.level * (avgAccuracy / 100));
+            gameState.score += levelBonus;
+            
+            gameState.level++;
+            
+            // Increase difficulty
+            if (gameState.level === 3) {
+                gameState.gridDivisions = 8;
+            } else if (gameState.level === 5) {
+                gameState.gridDivisions = 16;
+            }
+            
+            // Show completion feedback
+            showFeedback("Poziom Ukończony! 🎉", 
+                        `Średnia dokładność: ${Math.round(avgAccuracy)}%\n` +
+                        `Bonus: +${levelBonus} punktów\n` +
+                        `Następny poziom: Siatka ${gameState.gridDivisions}x${gameState.gridDivisions}`);
+            
+        function completeLevel() {
+            // Prevent multiple calls
+            if (gameState.isTransitioning) {
+                console.log('[COMPLETE LEVEL] Already transitioning, ignoring');
+                return;
+            }
+            
+            gameState.isTransitioning = true;
+            console.log('[COMPLETE LEVEL] Starting level completion');
+            console.log(`[COMPLETE LEVEL] Current state - Level: ${gameState.level}, Stage: ${gameState.currentStage}`);
+            
+            // Calculate total score for level
+            const avgAccuracy = gameState.stageAccuracies.reduce((a, b) => a + b, 0) / 3;
+            const levelBonus = Math.round(50 * gameState.level * (avgAccuracy / 100));
+            gameState.score += levelBonus;
+            
+            console.log(`[COMPLETE LEVEL] Stage accuracies: [${gameState.stageAccuracies.join(', ')}]`);
+            console.log(`[COMPLETE LEVEL] Avg accuracy: ${avgAccuracy}%, Bonus: ${levelBonus}`);
+            
+            // Save old values for comparison
+            const oldGrid = gameState.gridDivisions;
+            const oldLevel = gameState.level;
+            
+            // Increment level BEFORE showing feedback
+            gameState.level++;
+            
+            // Update grid for new level
+            if (gameState.level === 3) {
+                gameState.gridDivisions = 8;
+                console.log('[COMPLETE LEVEL] Grid will increase to 8x8');
+            } else if (gameState.level === 5) {
+                gameState.gridDivisions = 16;
+                console.log('[COMPLETE LEVEL] Grid will increase to 16x16');
+            }
+            
+            // Clear any existing timer
+            if (gameState.timer) {
+                clearInterval(gameState.timer);
+                gameState.timer = null;
+            }
+            
+            // Show completion feedback
+            showFeedback("Poziom Ukończony! 🎉", 
+                        `Średnia dokładność: ${Math.round(avgAccuracy)}%\n` +
+                        `Bonus: +${levelBonus} punktów\n` +
+                        `Przejście do poziomu ${gameState.level}`, 
+                        true);
+            
+            // Show level transition screen after feedback
+            setTimeout(() => {
+                console.log('[COMPLETE LEVEL] Showing transition screen for level', gameState.level);
+                showLevelTransition();
+                
+                // Prepare next level
+                setTimeout(() => {
+                    console.log('[COMPLETE LEVEL] Preparing level', gameState.level);
+                    prepareNextLevel(oldGrid);
+                }, 2000);
+            }, 2200); // Wait for feedback to close
+        }
+        
+        function showLevelTransition() {
+            const transition = document.getElementById('levelTransition');
+            document.getElementById('transitionLevel').textContent = gameState.level;
+            
+            let message = `Siatka ${gameState.gridDivisions}x${gameState.gridDivisions}`;
+            if (gameState.level > 3) {
+                message += ' • Timer aktywny!';
+            }
+            
+            // Add challenge name
+            const challengeIndex = (gameState.level - 1) % gameState.challenges.length;
+            const challengeName = gameState.challenges[challengeIndex].title;
+            message += `\n🎯 Wyzwanie: ${challengeName}`;
+            
+            document.getElementById('transitionText').innerHTML = message.replace('\n', '<br>');
+            
+            // Force show the transition
+            transition.style.display = 'flex';
+            transition.classList.add('show');
+            
+            console.log('[TRANSITION] Showing level', gameState.level, 'transition screen');
+            
+            setTimeout(() => {
+                transition.classList.remove('show');
+                setTimeout(() => {
+                    transition.style.display = 'none';
+                }, 500);
+                console.log('[TRANSITION] Hiding transition screen');
+            }, 1500);
+        }
+        
+        function prepareNextLevel(oldGrid) {
+            console.log('[PREPARE NEXT] Starting preparation for level', gameState.level);
+            console.log('[PREPARE NEXT] Current stage before reset:', gameState.currentStage);
+            
+            // Reset stage to 1 for new level
+            gameState.currentStage = 1;
+            gameState.stageAccuracies = [0, 0, 0];
+            
+            console.log('[PREPARE NEXT] Stage after reset:', gameState.currentStage);
+            
+            // Clear all canvases and strokes
+            gameState.strokes = [];
+            clearAll();
+            
+            // Update challenge for new level
+            const challengeIndex = (gameState.level - 1) % gameState.challenges.length;
+            console.log('[PREPARE NEXT] Loading challenge index:', challengeIndex);
+            
+            // Update UI with new level info
+            loadChallenge();
+            updateStageDisplay();
+            
+            // Update score display
+            document.getElementById('score').textContent = gameState.score;
+            
+            // Reinitialize canvases if grid changed
+            if (oldGrid !== gameState.gridDivisions) {
+                console.log('[PREPARE NEXT] Grid size changed from', oldGrid, 'to', gameState.gridDivisions);
+                initCanvases();
+            } else {
+                console.log('[PREPARE NEXT] Grid size unchanged, redrawing pattern only');
+                // Clear and redraw
+                drawGrid(ctx);
+                drawGrid(refCtx);
+                drawReferencePattern();
+            }
+            
+            // Hide timer initially
+            document.getElementById('timer').classList.remove('show');
+            document.getElementById('timer').classList.remove('timer-warning');
+            
+            // Start timer for levels 4+
+            if (gameState.level > 3) {
+                console.log('[PREPARE NEXT] Starting timer for level', gameState.level);
+                // Small delay to let UI settle
+                setTimeout(() => startTimer(), 500);
+            }
+            
+            // Reset transition flag
+            gameState.isTransitioning = false;
+            
+            console.log('[PREPARE NEXT] Level', gameState.level, 'ready to play');
+            console.log('[PREPARE NEXT] Final state - Stage:', gameState.currentStage, 'Grid:', gameState.gridDivisions);
+            console.log('🎮 GO! Start drawing!');
+            
+            // Show ready message
+            showToast(`🎮 Poziom ${gameState.level} - START!`, 'success', 2000);
+        }
+        }
+        
+        function loadChallenge() {
+            const challenge = gameState.challenges[(gameState.level - 1) % gameState.challenges.length];
+            document.getElementById('challengeTitle').textContent = `Wyzwanie #${gameState.level}: ${challenge.title}`;
+            document.getElementById('challengeDesc').textContent = challenge.description;
+            document.getElementById('level').textContent = gameState.level;
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('gridSize').textContent = `${gameState.gridDivisions}x${gameState.gridDivisions}`;
+            document.getElementById('hintText').textContent = challenge.hints[0];
+            updateAccuracyDisplay(0);
+        }
+        
+        function showHint() {
+            const hint = document.getElementById('hint');
+            hint.classList.add('show');
+            console.log('[HINT] Showing hint for stage', gameState.currentStage);
+            
+            // Highlight critical zones briefly
+            const challenge = gameState.challenges[(gameState.level - 1) % gameState.challenges.length];
+            const pattern = challenge.patterns[gameState.currentStage - 1];
+            const patternSize = pattern.length;
+            const cellSize = refCanvas.width / gameState.gridDivisions;
+            const scaleFactor = gameState.gridDivisions / patternSize;
+            
+            refCtx.save();
+            refCtx.fillStyle = 'rgba(255, 215, 0, 0.5)';
+            
+            if (challenge.criticalZones && challenge.criticalZones[gameState.currentStage - 1]) {
+                challenge.criticalZones[gameState.currentStage - 1].forEach(([row, col]) => {
+                    const startX = col * cellSize * scaleFactor;
+                    const startY = row * cellSize * scaleFactor;
+                    const endX = (col + 1) * cellSize * scaleFactor;
+                    const endY = (row + 1) * cellSize * scaleFactor;
+                    refCtx.fillRect(startX, startY, endX - startX, endY - startY);
+                });
+                
+                showToast('💡 Żółte obszary są najważniejsze!', 'warning', 2000);
+            }
+            
+            setTimeout(() => {
+                drawReferencePattern();
+                hint.classList.remove('show');
+            }, 3000);
+            
+            refCtx.restore();
+        }
+        
+        function showToast(message, type = 'default', duration = 3000) {
+            console.log(`[TOAST] Showing: "${message}" (type: ${type}, duration: ${duration}ms)`);
+            
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = '';
+            
+            if (type === 'success') toast.classList.add('success');
+            else if (type === 'warning') toast.classList.add('warning');
+            else if (type === 'error') toast.classList.add('error');
+            
+            toast.classList.add('show');
+            
+            clearTimeout(gameState.toastTimeout);
+            gameState.toastTimeout = setTimeout(() => {
+                console.log('[TOAST] Hiding toast');
+                toast.classList.remove('show');
+            }, duration);
+        }
+        
+        function showFeedback(title, text, autoClose = true) {
+            console.log(`[FEEDBACK] ${title}: ${text}`);
+            
+            // Only use popup for level completion
+            document.getElementById('feedbackTitle').textContent = title;
+            document.getElementById('feedbackText').textContent = text;
+            document.getElementById('feedback').classList.add('show');
+            document.getElementById('overlay').classList.add('show');
+            
+            // Auto close after 2 seconds
+            if (autoClose) {
+                setTimeout(() => {
+                    closeFeedback();
+                }, 2000);
+            }
+        }
+        
+        function closeFeedback() {
+            console.log('[FEEDBACK] Closing feedback dialog');
+            document.getElementById('feedback').classList.remove('show');
+            document.getElementById('overlay').classList.remove('show');
+        }
+        
+        function startTimer() {
+            gameState.timeLeft = Math.max(30, 60 - gameState.level * 5);
+            console.log(`[TIMER] Starting timer with ${gameState.timeLeft} seconds`);
+            
+            const timerElement = document.getElementById('timer');
+            timerElement.classList.add('show');
+            timerElement.classList.remove('timer-warning');
+            document.getElementById('timeLeft').textContent = gameState.timeLeft;
+            
+            // Show info about timer
+            showToast(`⏰ Timer aktywny! Masz ${gameState.timeLeft} sekund na ukończenie poziomu.`, 'warning', 4000);
+            
+            clearInterval(gameState.timer);
+            gameState.timer = setInterval(() => {
+                gameState.timeLeft--;
+                
+                if (gameState.timeLeft % 10 === 0) {
+                    console.log(`[TIMER] Time left: ${gameState.timeLeft}s`);
+                }
+                
+                document.getElementById('timeLeft').textContent = gameState.timeLeft;
+                
+                if (gameState.timeLeft <= 10) {
+                    timerElement.classList.add('timer-warning');
+                }
+                
+                if (gameState.timeLeft <= 0) {
+                    clearInterval(gameState.timer);
+                    console.log('[TIMER] Time is up!');
+                    showToast(`⏰ Czas minął! Dokładność: ${gameState.currentAccuracy}%`, 'warning');
+                    setTimeout(() => nextStage(), 2000);
+                }
+            }, 1000);
+        }
+        
+        // Initialize on load
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            if (document.getElementById('gameScreen').style.display !== 'none') {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(() => {
+                    console.log('[RESIZE] Window resized, reinitializing canvases');
+                    initCanvases();
+                    redrawStrokes();
+                }, 250); // Debounce resize events
+            }
+        });
+        
+        // IO Event Logging
+        let lastMouseVector = { x: 0, y: 0 };
+        let mouseMovements = [];
+        
+        function logIOEvent(type, details) {
+            const timestamp = new Date().toISOString().substr(11, 8);
+            console.log(`[IO ${timestamp}] ${type}: ${details}`);
+        }
+        
+        // Mouse movement tracking
+        document.addEventListener('mousemove', (e) => {
+            const vector = { 
+                x: e.clientX - lastMouseVector.x, 
+                y: e.clientY - lastMouseVector.y 
+            };
+            
+            if (Math.abs(vector.x) > 50 || Math.abs(vector.y) > 50) {
+                const magnitude = Math.sqrt(vector.x * vector.x + vector.y * vector.y);
+                const angle = Math.atan2(vector.y, vector.x) * (180 / Math.PI);
+                logIOEvent('MOUSE_MOVE', `Vector: [${vector.x.toFixed(0)}, ${vector.y.toFixed(0)}], Magnitude: ${magnitude.toFixed(0)}, Angle: ${angle.toFixed(0)}°`);
+            }
+            
+            lastMouseVector = { x: e.clientX, y: e.clientY };
+        });
+        
+        // Mouse click logging
+        document.addEventListener('click', (e) => {
+            const target = e.target.tagName + (e.target.id ? `#${e.target.id}` : '');
+            logIOEvent('CLICK', `Target: ${target}, Position: [${e.clientX}, ${e.clientY}]`);
+        });
+        
+        // Keyboard logging
+        document.addEventListener('keydown', (e) => {
+            if (!e.repeat) {
+                logIOEvent('KEY_DOWN', `Key: ${e.key}, Code: ${e.code}, Ctrl: ${e.ctrlKey}, Shift: ${e.shiftKey}`);
+            }
+        });
+        
+        // Tab/Focus logging
+        document.addEventListener('focus', (e) => {
+            if (e.target !== document) {
+                logIOEvent('FOCUS', `Element: ${e.target.tagName}${e.target.id ? '#' + e.target.id : ''}`);
+            }
+        }, true);
+        
+        // Touch events logging
+        document.addEventListener('touchstart', (e) => {
+            const touch = e.touches[0];
+            logIOEvent('TOUCH_START', `Position: [${touch.clientX.toFixed(0)}, ${touch.clientY.toFixed(0)}], Touches: ${e.touches.length}`);
+        });
+        
+        document.addEventListener('touchmove', (e) => {
+            if (Date.now() % 10 === 0) { // Throttle touch move
+                const touch = e.touches[0];
+                logIOEvent('TOUCH_MOVE', `Position: [${touch.clientX.toFixed(0)}, ${touch.clientY.toFixed(0)}]`);
+            }
+        });
+        
+        // Debug info on load
+        console.log('=================================');
+        console.log('ProtoLab Game v1.3 - Debug Mode');
+        console.log('=================================');
+        console.log('IO Events are now being logged');
+        console.log('Mouse vectors show movement > 50px');
+        console.log('All clicks, keys, and touches tracked');
+        console.log('=================================');
+    </script>
+</body>
+</html>
